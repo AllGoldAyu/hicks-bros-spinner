@@ -1988,7 +1988,13 @@
   var askedMap = lsGet(LS_KEYS.asked, {});
   var history = lsGet(LS_KEYS.history, []);
 
+  /* "The Comments" pseudo-target (added 2026-07-13): the audience seat for the
+     outro comment-section spin. Not on the roster (never picked by Random Brother);
+     all attributes true so every question is eligible; keeps its own asked-history. */
+  var COMMENTS_TARGET = { id:"comments", name:"The Comments", archetype:"", is_parent:true, is_married:true, is_oldest:true, is_youngest:true, active:true };
+
   brothers.forEach(function(b){ if(!askedMap[b.id]) askedMap[b.id] = []; });
+  if(!askedMap[COMMENTS_TARGET.id]) askedMap[COMMENTS_TARGET.id] = [];
 
   var selectedCategory = "random";
   var currentSpin = null;   // { brotherId, questionId }
@@ -2002,6 +2008,7 @@
   }
 
   function getBrother(id){
+    if(id === COMMENTS_TARGET.id) return COMMENTS_TARGET;
     for(var i=0;i<brothers.length;i++){ if(brothers[i].id === id) return brothers[i]; }
     return null;
   }
@@ -2099,6 +2106,7 @@
   function renderTargetSelect(){
     var current = el.targetSelect.value;
     var html = '<option value="random">Random Brother</option>';
+    html += '<option value="comments">💬 The Comments (audience)</option>';
     activeBrothers().forEach(function(b){
       html += '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
     });
@@ -2277,7 +2285,7 @@
   }
 
   function setStageDisplay(brother, question){
-    el.onAirName.textContent = brother.name.toUpperCase() + ", YOU'RE UP";
+    el.onAirName.textContent = brother.id === COMMENTS_TARGET.id ? "💬 THIS ONE'S FOR THE COMMENTS" : brother.name.toUpperCase() + ", YOU'RE UP";
     el.onAirQuestion.textContent = question.text;
     var cat = CAT_MAP[question.category];
     if(cat){
@@ -2389,6 +2397,7 @@
   }
   function resetSession(){
     brothers.forEach(function(b){ askedMap[b.id] = []; });
+    askedMap[COMMENTS_TARGET.id] = [];
     history = [];
     currentSpin = null;
     setMarkEnabled(false);
@@ -2456,6 +2465,7 @@
         if(Array.isArray(data.roster) && data.roster.length) brothers = data.roster;
         if(Array.isArray(data.history)) history = data.history;
         brothers.forEach(function(b){ if(!askedMap[b.id]) askedMap[b.id] = []; });
+        if(!askedMap[COMMENTS_TARGET.id]) askedMap[COMMENTS_TARGET.id] = [];
         saveAll();
         renderTargetSelect();
         renderRoster();
